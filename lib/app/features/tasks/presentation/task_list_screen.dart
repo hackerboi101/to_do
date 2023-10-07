@@ -13,12 +13,15 @@ final taskViewModelProvider =
   return TaskViewModel(ref.container);
 });
 
+final selectedSortOptionProvider = StateProvider<String>((ref) => 'name');
+
 class TaskListScreen extends ConsumerWidget {
   const TaskListScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final taskViewModel = ref.watch(taskViewModelProvider.notifier);
+    final selectedSortOption = ref.watch(selectedSortOptionProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(253, 240, 224, 1),
@@ -51,35 +54,105 @@ class TaskListScreen extends ConsumerWidget {
         },
         child: const Icon(Icons.add),
       ),
-      body: FutureBuilder<List<Task>>(
-        future: taskViewModel.fetchTasks(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            final tasks = snapshot.data ?? [];
+      body: Column(
+        children: [
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(243, 220, 190, 1),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 5,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: DropdownButton<String>(
+              value: selectedSortOption.state,
+              icon: const Icon(Icons.arrow_drop_down),
+              elevation: 2,
+              underline: Container(
+                color: Colors.transparent,
+              ),
+              dropdownColor: const Color.fromRGBO(243, 220, 190, 1),
+              items: const <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(
+                  value: 'name',
+                  child: Text(
+                    'Sort by Name',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color.fromRGBO(147, 90, 22, 1),
+                    ),
+                  ),
+                ),
+                DropdownMenuItem<String>(
+                  value: 'date',
+                  child: Text(
+                    'Sort by Date',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color.fromRGBO(147, 90, 22, 1),
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                selectedSortOption.state = value!;
+                ref.refresh(taskViewModelProvider);
+              },
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<Task>>(
+              future: taskViewModel.fetchTasks(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else {
+                  final tasks = snapshot.data!;
+                  final sortedTasks = _sortTasks(
+                      taskViewModel, selectedSortOption.state, tasks);
 
-            return Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: ListView.builder(
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: TaskListItem(
-                      task: task,
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: ListView.builder(
+                      itemCount: sortedTasks.length,
+                      itemBuilder: (context, index) {
+                        final task = sortedTasks[index];
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 3.0),
+                          child: TaskListItem(
+                            task: task,
+                          ),
+                        );
+                      },
                     ),
                   );
-                },
-              ),
-            );
-          }
-        },
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  List<Task> _sortTasks(
+      TaskViewModel taskViewModel, String option, List<Task> tasks) {
+    final sortedTasks = List<Task>.from(tasks);
+
+    if (option == 'name') {
+      sortedTasks.sort((a, b) => a.title.compareTo(b.title));
+    } else if (option == 'date') {
+      sortedTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    }
+    return sortedTasks;
   }
 }
 
