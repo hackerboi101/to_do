@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:to_do/app/features/authentication/domain/authentication_viewmodel.dart';
 import 'package:to_do/app/features/tasks/domain/task_viewmodel.dart';
-import 'package:to_do/app/features/reminders/domain/reminder_viewmodel.dart';
 
 final appNameProvider = Provider<String>((ref) => "To Do");
 
@@ -24,11 +23,6 @@ final authenticationViewModelProvider =
 final taskViewModelProvider =
     StateNotifierProvider<TaskViewModel, TaskState>((ref) {
   return TaskViewModel(ref.container);
-});
-
-final reminderViewModelProvider =
-    StateNotifierProvider<ReminderViewModel, ReminderState>((ref) {
-  return ReminderViewModel();
 });
 
 final themeDataProvider = Provider<ThemeData>((ref) {
