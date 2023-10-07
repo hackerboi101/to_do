@@ -59,9 +59,7 @@ class TaskRepositoryImpl {
     );
   }
 
-  // Function to add a new task
   Future<void> addTask(Task newTask) async {
-    // Find the highest id in the database
     final List<Map<String, dynamic>> result =
         await _database.rawQuery('SELECT MAX(id) as max_id FROM $_tableName');
 
@@ -74,7 +72,6 @@ class TaskRepositoryImpl {
     );
   }
 
-  // Function to edit an existing task
   Future<void> editTask(Task task) async {
     await _database.update(
       _tableName,
@@ -84,7 +81,6 @@ class TaskRepositoryImpl {
     );
   }
 
-  // Function to delete a task by its ID
   Future<void> deleteTask(int taskId) async {
     await _database.delete(
       _tableName,
@@ -93,7 +89,6 @@ class TaskRepositoryImpl {
     );
   }
 
-  // Function to mark a task as completed
   Future<void> markTaskAsCompleted(int taskId) async {
     await _database.update(
       _tableName,
@@ -103,7 +98,6 @@ class TaskRepositoryImpl {
     );
   }
 
-  // Function to unmark a task as completed
   Future<void> unmarkTaskAsCompleted(int taskId) async {
     await _database.update(
       _tableName,

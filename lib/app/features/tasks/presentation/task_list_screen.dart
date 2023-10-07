@@ -14,6 +14,7 @@ final taskViewModelProvider =
 });
 
 final selectedSortOptionProvider = StateProvider<String>((ref) => 'name');
+final selectedFilterOptionProvider = StateProvider<String>((ref) => 'all');
 
 class TaskListScreen extends ConsumerWidget {
   const TaskListScreen({Key? key}) : super(key: key);
@@ -22,6 +23,8 @@ class TaskListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final taskViewModel = ref.watch(taskViewModelProvider.notifier);
     final selectedSortOption = ref.watch(selectedSortOptionProvider.notifier);
+    final selectedFilterOption =
+        ref.watch(selectedFilterOptionProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color.fromRGBO(253, 240, 224, 1),
@@ -56,55 +59,121 @@ class TaskListScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(243, 220, 190, 1),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 5,
-                  offset: const Offset(0, 1),
+          const SizedBox(height: 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(left: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(243, 220, 190, 1),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 5,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: DropdownButton<String>(
-              value: selectedSortOption.state,
-              icon: const Icon(Icons.arrow_drop_down),
-              elevation: 2,
-              underline: Container(
-                color: Colors.transparent,
+                child: DropdownButton<String>(
+                  value: selectedSortOption.state,
+                  icon: const Icon(Icons.arrow_drop_down),
+                  elevation: 2,
+                  underline: Container(
+                    color: Colors.transparent,
+                  ),
+                  dropdownColor: const Color.fromRGBO(243, 220, 190, 1),
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                      value: 'name',
+                      child: Text(
+                        'Sort by Name',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromRGBO(147, 90, 22, 1),
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'date',
+                      child: Text(
+                        'Sort by Date',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromRGBO(147, 90, 22, 1),
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    selectedSortOption.state = value!;
+                    ref.refresh(taskViewModelProvider);
+                  },
+                ),
               ),
-              dropdownColor: const Color.fromRGBO(243, 220, 190, 1),
-              items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(
-                  value: 'name',
-                  child: Text(
-                    'Sort by Name',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color.fromRGBO(147, 90, 22, 1),
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(243, 220, 190, 1),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 5,
+                      offset: const Offset(0, 1),
                     ),
-                  ),
+                  ],
                 ),
-                DropdownMenuItem<String>(
-                  value: 'date',
-                  child: Text(
-                    'Sort by Date',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color.fromRGBO(147, 90, 22, 1),
+                child: DropdownButton<String>(
+                  value: selectedFilterOption.state,
+                  icon: const Icon(Icons.arrow_drop_down),
+                  elevation: 2,
+                  underline: Container(
+                    color: Colors.transparent,
+                  ),
+                  dropdownColor: const Color.fromRGBO(243, 220, 190, 1),
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                      value: 'all',
+                      child: Text(
+                        'All Tasks',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromRGBO(147, 90, 22, 1),
+                        ),
+                      ),
                     ),
-                  ),
+                    DropdownMenuItem<String>(
+                      value: 'completed',
+                      child: Text(
+                        'Completed Tasks',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromRGBO(147, 90, 22, 1),
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem<String>(
+                      value: 'incomplete',
+                      child: Text(
+                        'Incomplete Tasks',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromRGBO(147, 90, 22, 1),
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    selectedFilterOption.state = value!;
+                    ref.refresh(taskViewModelProvider);
+                  },
                 ),
-              ],
-              onChanged: (value) {
-                selectedSortOption.state = value!;
-                ref.refresh(taskViewModelProvider);
-              },
-            ),
+              ),
+            ],
           ),
           Expanded(
             child: FutureBuilder<List<Task>>(
@@ -116,8 +185,10 @@ class TaskListScreen extends ConsumerWidget {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else {
                   final tasks = snapshot.data!;
+                  final filteredTasks = _filterTasks(
+                      taskViewModel, selectedFilterOption.state, tasks);
                   final sortedTasks = _sortTasks(
-                      taskViewModel, selectedSortOption.state, tasks);
+                      taskViewModel, selectedSortOption.state, filteredTasks);
 
                   return Padding(
                     padding: const EdgeInsets.only(top: 20.0),
@@ -153,6 +224,19 @@ class TaskListScreen extends ConsumerWidget {
       sortedTasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
     }
     return sortedTasks;
+  }
+
+  List<Task> _filterTasks(
+      TaskViewModel taskViewModel, String option, List<Task> tasks) {
+    if (option == 'all') {
+      return tasks;
+    } else if (option == 'completed') {
+      return tasks.where((task) => task.isCompleted).toList();
+    } else if (option == 'incomplete') {
+      return tasks.where((task) => !task.isCompleted).toList();
+    } else {
+      return tasks;
+    }
   }
 }
 

@@ -49,8 +49,6 @@ class AuthenticationViewModel extends StateNotifier<AuthenticationState> {
   }
 
   Future<void> signUp(String userName, String email, String password) async {
-    // Implement your sign-up logic here, e.g., creating a new user
-    // and saving their credentials to the repository.
     await _repository.initDatabase();
     final isRegistered =
         await _repository.registerUser(userName, email, password);

@@ -25,17 +25,14 @@ class AuthenticationRepositoryImpl {
 
   Future<bool> authenticateUser(String email, String password) async {
     try {
-      // Query the user by email only
       final user = await _database.query(
         _tableName,
         where: 'email = ?',
         whereArgs: [email],
       );
 
-      // Check if the user exists and the password matches
       return user.isNotEmpty && user[0]['password'] == password;
     } catch (e) {
-      // Handle any errors that occur during querying the database
       Get.snackbar(
         'Error',
         'Error authenticating user! $e',
@@ -55,8 +52,6 @@ class AuthenticationRepositoryImpl {
       );
 
       if (user.isNotEmpty) {
-        // User with the same email already exists.
-
         Get.snackbar(
           'Error',
           'User with this email already exists.',
@@ -64,7 +59,6 @@ class AuthenticationRepositoryImpl {
         );
         return false;
       } else {
-        // User does not exist, proceed with registration.
         await _database.insert(
           _tableName,
           {
@@ -82,7 +76,6 @@ class AuthenticationRepositoryImpl {
         return true;
       }
     } catch (e) {
-      // Handle any errors that occur during registration.
       Get.snackbar(
         'Error',
         'Error registering user!',
