@@ -60,11 +60,17 @@ class TaskRepositoryImpl {
   }
 
   // Function to add a new task
-  Future<void> addTask(Task task) async {
+  Future<void> addTask(Task newTask) async {
+    // Find the highest id in the database
+    final List<Map<String, dynamic>> result =
+        await _database.rawQuery('SELECT MAX(id) as max_id FROM $_tableName');
+
+    int newId = (result.first['max_id'] ?? 0) + 1;
+    newTask = newTask.copyWith(id: newId);
+
     await _database.insert(
       _tableName,
-      task.toJson(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      newTask.toJson(),
     );
   }
 
@@ -92,6 +98,16 @@ class TaskRepositoryImpl {
     await _database.update(
       _tableName,
       {'is_completed': 1},
+      where: 'id = ?',
+      whereArgs: [taskId],
+    );
+  }
+
+  // Function to unmark a task as completed
+  Future<void> unmarkTaskAsCompleted(int taskId) async {
+    await _database.update(
+      _tableName,
+      {'is_completed': 0},
       where: 'id = ?',
       whereArgs: [taskId],
     );

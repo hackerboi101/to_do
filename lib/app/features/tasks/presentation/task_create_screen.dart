@@ -2,8 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:to_do/app/core/models/task.dart';
 import 'package:to_do/app/features/tasks/domain/task_viewmodel.dart';
+import 'package:to_do/app/features/tasks/presentation/task_list_screen.dart';
+import 'package:intl/intl.dart';
 
 class TaskCreateStateNotifier extends StateNotifier<DateTime> {
   TaskCreateStateNotifier() : super(DateTime.now());
@@ -12,6 +15,14 @@ class TaskCreateStateNotifier extends StateNotifier<DateTime> {
     state = newDueDate;
   }
 }
+
+final titleControllerProvider = Provider<TextEditingController>((ref) {
+  return TextEditingController();
+});
+
+final descriptionControllerProvider = Provider<TextEditingController>((ref) {
+  return TextEditingController();
+});
 
 final taskViewModelProvider =
     StateNotifierProvider<TaskViewModel, TaskState>((ref) {
@@ -33,10 +44,9 @@ class TaskCreateScreen extends ConsumerWidget {
     final taskViewModel = ref.read(taskViewModelProvider.notifier);
     final dueDate = ref.watch(taskCreateStateProvider);
 
-    final TextEditingController titleController = TextEditingController();
-    final TextEditingController descriptionController = TextEditingController();
+    final titleController = ref.watch(titleControllerProvider);
+    final descriptionController = ref.watch(descriptionControllerProvider);
 
-    // Initialize text controllers with task details if provided
     if (task != null) {
       titleController.text = task!.title;
       descriptionController.text = task!.description;
@@ -45,84 +55,206 @@ class TaskCreateScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(253, 240, 224, 1),
       appBar: AppBar(
-        title: Text(task == null ? 'Add Task' : 'Edit Task'),
+        backgroundColor: const Color.fromRGBO(253, 240, 224, 1),
+        centerTitle: true,
+        title: Column(
+          children: [
+            Image.asset(
+              'assets/images/app_logo.png',
+              width: 37,
+              height: 37,
+            ),
+            const SizedBox(height: 3),
+            task == null
+                ? const Text(
+                    'Add Task',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromRGBO(147, 90, 22, 1),
+                    ),
+                  )
+                : const Text(
+                    'Edit Task',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromRGBO(147, 90, 22, 1),
+                    ),
+                  ),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 10),
             TextFormField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color.fromRGBO(147, 90, 22, 1),
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Title',
+                hintStyle: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromRGBO(147, 90, 22, 1),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              maxLines: null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             TextFormField(
               controller: descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+                color: Color.fromRGBO(147, 90, 22, 1),
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Description',
+                hintStyle: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color.fromRGBO(147, 90, 22, 1),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              maxLines: null,
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Text('Due Date: '),
-                TextButton(
-                  onPressed: () async {
-                    final selectedDate = await showDatePicker(
-                      context: context,
-                      initialDate: dueDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2101),
+            const SizedBox(height: 300),
+            GestureDetector(
+              onTap: () async {
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: dueDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2101),
+                );
+                if (selectedDate != null) {
+                  final selectedTime = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.fromDateTime(dueDate),
+                  );
+                  if (selectedTime != null) {
+                    final newDueDate = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
                     );
-                    if (selectedDate != null) {
-                      final selectedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.fromDateTime(dueDate),
-                      );
-                      if (selectedTime != null) {
-                        final newDueDate = DateTime(
-                          selectedDate.year,
-                          selectedDate.month,
-                          selectedDate.day,
-                          selectedTime.hour,
-                          selectedTime.minute,
-                        );
-                        ref
-                            .read(taskCreateStateProvider.notifier)
-                            .setDueDate(newDueDate);
-                      }
-                    }
-                  },
-                  child: Text(
-                    "${dueDate.toLocal()}"
-                        .split(' ')[0], // Display selected date
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
+                    ref
+                        .read(taskCreateStateProvider.notifier)
+                        .setDueDate(newDueDate);
+                  }
+                }
+              },
+              child: Center(
+                child: IntrinsicWidth(
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(147, 90, 22, 0.7),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 5,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Due Date',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color.fromRGBO(253, 240, 224, 1),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              '${DateFormat('h:mm a').format(dueDate)} || ',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color.fromRGBO(253, 240, 224, 1),
+                              ),
+                            ),
+                            Text(
+                              DateFormat('MMM d, yyyy').format(dueDate),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color.fromRGBO(253, 240, 224, 1),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                final editedTask = Task(
-                  id: task?.id ?? 0,
-                  title: titleController.text,
-                  description: descriptionController.text,
-                  isCompleted: task?.isCompleted ?? false,
-                  dueDate: dueDate, // Use selected due date and time
-                );
+            const SizedBox(height: 50),
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  final editedTask = Task(
+                    id: task?.id ?? 0,
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    isCompleted: task?.isCompleted ?? false,
+                    dueDate: dueDate,
+                  );
 
-                if (task == null) {
-                  // Add new task
-                  taskViewModel.addTask(editedTask);
-                } else {
-                  // Edit existing task
-                  taskViewModel.editTask(editedTask);
-                }
+                  if (task == null) {
+                    taskViewModel.addTask(editedTask);
+                  } else {
+                    taskViewModel.editTask(editedTask);
+                  }
 
-                Navigator.pop(context);
-              },
-              child: Text(task == null ? 'Add Task' : 'Save Changes'),
+                  titleController.clear();
+                  descriptionController.clear();
+
+                  Get.to(const TaskListScreen());
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  backgroundColor: const Color.fromRGBO(147, 90, 22, 1),
+                ),
+                child: Text(
+                  task == null ? 'Add Task' : 'Save Changes',
+                  style: const TextStyle(
+                    color: Color.fromRGBO(253, 240, 224, 1),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

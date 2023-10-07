@@ -38,6 +38,8 @@ class TaskViewModel extends StateNotifier<TaskState> {
   Future<void> addTask(Task newTask) async {
     await _repository.initDatabase();
     await _repository.addTask(newTask);
+    // Update the state of the TaskState object
+    state = TaskState(tasks: [...state.tasks, newTask]);
     fetchTasks(); // Refresh the task list
   }
 
@@ -59,6 +61,25 @@ class TaskViewModel extends StateNotifier<TaskState> {
   Future<void> markTaskAsCompleted(int taskId) async {
     await _repository.initDatabase();
     await _repository.markTaskAsCompleted(taskId);
-    fetchTasks(); // Refresh the task list
+    // Update the task's completion status in the state
+    state = TaskState(
+      tasks: state.tasks
+          .map((task) =>
+              task.id == taskId ? task.copyWith(isCompleted: true) : task)
+          .toList(),
+    );
+  }
+
+  // Function to unmark a task as completed
+  Future<void> unmarkTaskAsCompleted(int taskId) async {
+    await _repository.initDatabase();
+    await _repository.unmarkTaskAsCompleted(taskId);
+    // Update the task's completion status in the state
+    state = TaskState(
+      tasks: state.tasks
+          .map((task) =>
+              task.id == taskId ? task.copyWith(isCompleted: false) : task)
+          .toList(),
+    );
   }
 }
