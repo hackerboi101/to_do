@@ -48,6 +48,8 @@ class TaskViewModel extends StateNotifier<TaskState> {
   Future<void> deleteTask(int taskId) async {
     await _repository.initDatabase();
     await _repository.deleteTask(taskId);
+    state = TaskState(
+        tasks: state.tasks.where((task) => task.id != taskId).toList());
     fetchTasks();
   }
 
