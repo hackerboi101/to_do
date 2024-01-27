@@ -41,7 +41,7 @@ class TaskCreateScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final taskViewModel = ref.read(taskViewModelProvider.notifier);
+    final taskViewModel = ref.watch(taskViewModelProvider.notifier);
     final dueDate = ref.watch(taskCreateStateProvider);
 
     final titleController = ref.watch(titleControllerProvider);
@@ -223,7 +223,7 @@ class TaskCreateScreen extends ConsumerWidget {
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(vertical: 16.0),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final editedTask = Task(
                       id: task?.id ?? 0,
                       title: titleController.text,
@@ -233,9 +233,13 @@ class TaskCreateScreen extends ConsumerWidget {
                     );
 
                     if (task == null) {
-                      taskViewModel.addTask(editedTask);
+                      await taskViewModel
+                          .addTask(editedTask)
+                          .whenComplete(() => taskViewModel.fetchTasks());
                     } else {
-                      taskViewModel.editTask(editedTask);
+                      await taskViewModel
+                          .editTask(editedTask)
+                          .whenComplete(() => taskViewModel.fetchTasks());
                     }
 
                     titleController.clear();

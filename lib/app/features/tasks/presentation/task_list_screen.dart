@@ -252,23 +252,37 @@ class TaskListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
-        final taskViewModel = ref.read(taskViewModelProvider.notifier);
+        final taskViewModel = ref.watch(taskViewModelProvider.notifier);
 
         return Dismissible(
           key: Key(task.id.toString()),
+          direction: DismissDirection.endToStart,
           onDismissed: (direction) {
             if (direction == DismissDirection.endToStart) {
               taskViewModel.deleteTask(task.id);
-              ref.refresh(taskViewModelProvider);
             }
           },
           background: Container(
-            color: Colors.red,
+            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 5,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
             alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20.0),
-            child: const Icon(
-              Icons.delete,
-              color: Colors.white,
+            child: const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Icon(
+                Icons.delete,
+                color: Colors.white,
+              ),
             ),
           ),
           child: InkWell(
